@@ -87,12 +87,15 @@ public class State {
 	}
 	
 	public State hasChildState(char name) {
+		if(this.children.isEmpty()) {
+			return null;
+		}
+		
 		for(State state : this.children) {
 			if(state.getName() == name) {
 				return state;
 			}
 		}
-		
 		return null;
 	}
 	
