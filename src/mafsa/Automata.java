@@ -197,7 +197,23 @@ public class Automata {
 		return null;
 	}
 	
-	public List<String> suggest(String word, int suggestionsCount) {
+	public List<String> autoComplete(String word, int num) {
+		List<String> suggestions = new ArrayList<>();
+		
+		for(String legitWord : this.vocab) {
+			if(legitWord.startsWith(word)) {
+				suggestions.add(legitWord);
+				
+				if(suggestions.size() == num) {
+					return suggestions;
+				}
+			}
+		}
+		
+		return suggestions;
+	}
+	
+	public List<String> spellCorrect_(String word, int suggestionsCount) {
 		List<String> suggestions = new ArrayList<>();
 		
 		State currentState = this.root;
@@ -207,12 +223,56 @@ public class Automata {
 			
 			//possible mistake on 'i' character
 			if(child == null) {
-				System.out.println("mistake");
+				System.out.println("mistake in " + word.charAt(i));
+				
+				//take all branches with the same prefix
+				for(State currentStateChild : currentState.getChildren()) {
+					getWords(currentStateChild, suggestions);
+				}
+				
+				return suggestions;
+			}
+			
+			currentState = child;
+		}
+		
+		return suggestions;
+	}
+	
+	private void getWords(State state, List<String> words) {		
+		if(state.isFinalState()) {
+			words.add(state.getPrefix());
+			return;
+		}
+		else if(state.isParsialState()) {
+			words.add(state.getPrefix());
+		}
+		
+		for(State child : state.getChildren()) {
+			getWords(child, words);
+		}
+	}
+	
+	public List<String> spellCorrect(String word, int suggestionsCount) {
+		List<String> suggestions = new ArrayList<>();
+		
+		State currentState = this.root;
+		
+		for(int i = 0; i < word.length(); i++) {
+			State child = currentState.hasChildState(word.charAt(i));
+			
+			//possible mistake on 'i' character
+			if(child == null) {
+				System.out.print("mistake");
 				//mistake on the last character
 				if(i == (word.length() - 1)) {	
-					System.out.println("yes");
+					System.out.println(" in last char");
 					for(State currentStateChild : currentState.getChildren()) {
-						suggestions.add(currentStateChild.getPrefix());
+						//add words only if the state is parsial
+						//i.e word exists in vocab
+						if(currentStateChild.isParsialState()) {
+							suggestions.add(currentStateChild.getPrefix());
+						}
 					}
 					
 					return suggestions;
@@ -232,10 +292,24 @@ public class Automata {
 			}
 		}		
 		
-		
-		//word is correct
-		System.out.println("word is correct");
-		return suggestions;
+		if(currentState.isParsialState()) {
+			//word is correct
+			System.out.println("word is correct");
+			return suggestions;
+		}
+		else {
+			for(State currentStateChild : currentState.getChildren()) {
+				if(currentStateChild.isParsialState()) {
+					suggestions.add(currentStateChild.getPrefix());
+				}
+			}
+			
+			return suggestions;
+		}
+	}
+	
+	public boolean exist(String word) {
+		return this.vocab.contains(word);
 	}
 	
 	private boolean existArray(String word) {
